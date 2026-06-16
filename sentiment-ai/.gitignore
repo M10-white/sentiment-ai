@@ -1,0 +1,28 @@
+# Environnement virtuel
+.venv/
+venv/
+
+# Caches Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Caches & rapports d'outils
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Rapports de tests générés
+report.xml
+junit-*.xml
+pylint-report.txt
+bandit-report.json
+
+# Sorties Locust (tests de charge)
+locust-report*.csv
+
+# Divers IDE / OS
+.idea/
+.vscode/
+.DS_Store

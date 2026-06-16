@@ -1,0 +1,92 @@
+pipeline {
+    agent any
+
+    stages {
+        // STAGE 1 : Checkout
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        // STAGE 2 : Installation des dépendances
+        stage('Install') {
+            steps {
+                sh 'pip3 install -r requirements.txt --break-system-packages'
+            }
+        }
+
+        // STAGE 3 : Analyse statique Pylint
+        stage('Lint') {
+            steps {
+                sh '''
+                    pylint src/ --fail-under=7.0 \
+                        --output-format=parseable \
+                        > pylint-report.txt || true
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'pylint-report.txt',
+                                     allowEmptyArchive: true
+                }
+            }
+        }
+
+        // STAGE 4 : Tests unitaires + couverture
+        stage('Tests Unitaires') {
+            steps {
+                sh '''
+                    pytest tests/test_model.py \
+                        --cov=src \
+                        --cov-report=xml:coverage.xml \
+                        --junit-xml=junit-unit.xml \
+                        -v
+                '''
+            }
+            post {
+                always {
+                    junit 'junit-unit.xml'
+                }
+            }
+        }
+
+        // STAGE 5 : Tests d'intégration
+        stage('Tests Integration') {
+            steps {
+                sh '''
+                    pytest tests/test_api.py \
+                        --junit-xml=junit-integration.xml \
+                        -v
+                '''
+            }
+            post {
+                always {
+                    junit 'junit-integration.xml'
+                }
+            }
+        }
+
+        // STAGE 6 : Audit sécurité Bandit
+        stage('Security Scan') {
+            steps {
+                sh 'bandit -r src/ -f json -o bandit-report.json || true'
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'bandit-report.json',
+                                     allowEmptyArchive: true
+                }
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo 'Pipeline echoue. Verifiez les rapports.'
+        }
+        success {
+            echo 'Pipeline reussi. Tous les stages sont verts.'
+        }
+    }
+}
