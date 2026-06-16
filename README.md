@@ -46,7 +46,7 @@ python -m venv .venv
 
 # 3. L'activer
 #    Windows (PowerShell) :
-.venv\Scripts\Activate.ps1
+venv/scripts/activate
 #    Linux / macOS :
 source .venv/bin/activate
 
