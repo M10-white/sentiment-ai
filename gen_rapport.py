@@ -6,12 +6,14 @@ from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, HRFlowable, Table, TableStyle, PageBreak,
-    KeepTogether
+    KeepTogether, Image
 )
 from reportlab.platypus.doctemplate import PageTemplate, BaseDocTemplate
 from reportlab.platypus.frames import Frame
+import os
 
 OUTPUT = r"C:\Users\bchao\Downloads\rapport_atelier_tests_sentimentia.pdf"
+SCREENSHOTS_DIR = r"C:\Users\bchao\Downloads\screenshots"  # Dossier où placer vos screenshots
 
 styles = getSampleStyleSheet()
 H1 = ParagraphStyle("H1", parent=styles["Heading1"], fontSize=15,
@@ -46,6 +48,21 @@ def qa(num, question, answers):
     for a in answers:
         flow.append(Paragraph(a, ANS))
     story.append(KeepTogether(flow))
+
+def add_screenshot(filename, width=15*cm, caption=""):
+    """Ajoute une image (screenshot) au rapport."""
+    filepath = os.path.join(SCREENSHOTS_DIR, filename)
+    if os.path.exists(filepath):
+        img = Image(filepath, width=width)
+        story.append(img)
+        if caption:
+            story.append(Paragraph(f"<i>{caption}</i>", 
+                ParagraphStyle("Caption", parent=styles["Normal"], fontSize=9, 
+                    alignment=1, spaceAfter=8, textColor=colors.HexColor("#666666"))))
+        sp(6)
+    else:
+        story.append(Paragraph(f"<font color='red'>[Image manquante: {filename}]</font>", BODY))
+        sp(3)
 
 def make_table(data, widths, header_color="#33475b"):
     t = Table(data, colWidths=widths)
@@ -152,6 +169,8 @@ qa("0.4", "Que se passe-t-il si model.predict() leve une SentimentError dans l'e
 qa("0.5", "Capture d'ecran des 2 smoke tests en statut PASSED.",
    ["Les deux smoke tests (test_health_returns_ok et test_predict_positive_text) passent. "
     "pytest affiche '2 passed', ce qui valide l'installation de l'environnement."])
+add_screenshot("tp0_smoke_tests.png", caption="Figure 0.1 – Résultat des 2 smoke tests en vert")
+sp(3)
 qa("0.6", "Quelles lignes de src/model.py ne sont pas couvertes par les 2 smoke tests, et pourquoi ?",
    ["Avant l'ecriture des tests du TP1, la couverture laissait de cote la levee de "
     "SentimentError ainsi que les branches NEGATIVE et NEUTRAL. C'est normal : les smoke tests "
@@ -187,6 +206,8 @@ qa("1.5", "Quelle est votre couverture sur src/model.py ?",
    ["Apres l'ecriture de tous les tests et la correction du defaut de score, la couverture de "
     "src/model.py atteint 100 pour cent. Toutes les branches sont exercees : positif, negatif, "
     "neutre, exception, et le plafonnement du score."])
+add_screenshot("tp1_coverage.png", caption="Figure 1.1 – Rapport de couverture TP1: 100%")
+sp(3)
 h2("Defaut detecte au TP1 : le score non borne")
 P("Un test envoyant les dix mots positifs verifiait que le score ne depassait pas 1.0. Il a "
   "echoue en affichant 1.6 : la formule 0.6 + 0.1 x n n'etait pas plafonnee. J'ai corrige le "
@@ -229,6 +250,8 @@ qa("2.6", "A quoi servent les balises de report.xml et pourquoi Jenkins en a bes
     "structure plutot que de la sortie console car il peut le parser de facon fiable, marquer "
     "le build en succes ou en echec, et archiver l'historique sur plusieurs builds pour suivre "
     "les tendances (tests qui ralentissent, nouveaux echecs)."])
+add_screenshot("tp2_junit_report.png", caption="Figure 2.1 – Rapports JUnit des tests d'intégration")
+sp(3)
 h2("Defaut detecte au TP2 : l'etat partage")
 P("Deux tests volontairement dependants donnaient des resultats differents selon leur ordre "
   "d'execution. La fixture autouse de remise a zero corrige le probleme en isolant chaque test.")
@@ -273,6 +296,10 @@ qa("3.7", "Corrigez les alertes Bandit et confirmez 0 alerte HIGH ou MEDIUM.",
 qa("3.8", "Quel score Pylint obtenez-vous une fois le pipeline vert ?",
    ["Pylint affiche un score de 9.61 sur 10, nettement au-dessus du seuil de 7.0 exige par le "
     "stage Lint. Le pipeline conserve donc ses six etapes au vert."])
+add_screenshot("tp3_pipeline_green.png", caption="Figure 3.1 – Pipeline Jenkins avec 6 étapes vertes")
+add_screenshot("tp3_pylint_score.png", caption="Figure 3.2 – Score Pylint : 9.61/10")
+add_screenshot("tp3_bandit_zero.png", caption="Figure 3.3 – Bandit : 0 alerte")
+sp(3)
 
 # ============ TP4 ============
 h1("7. TP4, TDD, performance et securite")
@@ -326,6 +353,10 @@ qa("4.9", "Le pipeline reste-t-il vert, et pourquoi le TDD ameliore la couvertur
    ["Les six etapes restent vertes apres le commit. Le TDD ameliore mecaniquement la couverture "
     "car chaque test ecrit avant le code force l'execution de lignes nouvelles, qui passent de "
     "non couvertes a couvertes des qu'elles sont implementees."])
+add_screenshot("tp4_tdd_tests.png", caption="Figure 4.1 – Tests de négation au vert")
+add_screenshot("tp4_locust_results.png", caption="Figure 4.2 – Résultats Locust à 50 utilisateurs")
+add_screenshot("tp4_pipeline_final.png", caption="Figure 4.3 – Pipeline final vert après TP4")
+sp(3)
 qa("4.10", "Recapitulatif des quatre defauts identifies et corriges.",
    ["Le tableau ci-dessous resume les quatre defauts rencontres au fil de l'atelier et la "
     "correction que j'ai appliquee a chacun."])
