@@ -12,7 +12,7 @@ pipeline {
         // STAGE 2 : Installation des dépendances
         stage('Install') {
             steps {
-                sh 'pip3 install -r requirements.txt --break-system-packages'
+                sh 'cd sentiment-ai && pip3 install -r requirements.txt --break-system-packages'
             }
         }
 
@@ -20,14 +20,14 @@ pipeline {
         stage('Lint') {
             steps {
                 sh '''
-                    pylint src/ --fail-under=7.0 \
+                    cd sentiment-ai && pylint src/ --fail-under=7.0 \
                         --output-format=parseable \
                         > pylint-report.txt || true
                 '''
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'pylint-report.txt',
+                    archiveArtifacts artifacts: 'sentiment-ai/pylint-report.txt',
                                      allowEmptyArchive: true
                 }
             }
@@ -37,7 +37,7 @@ pipeline {
         stage('Tests Unitaires') {
             steps {
                 sh '''
-                    pytest tests/test_model.py \
+                    cd sentiment-ai && pytest tests/test_model.py \
                         --cov=src \
                         --cov-report=xml:coverage.xml \
                         --junit-xml=junit-unit.xml \
@@ -46,7 +46,7 @@ pipeline {
             }
             post {
                 always {
-                    junit 'junit-unit.xml'
+                    junit 'sentiment-ai/junit-unit.xml'
                 }
             }
         }
@@ -55,14 +55,14 @@ pipeline {
         stage('Tests Integration') {
             steps {
                 sh '''
-                    pytest tests/test_api.py \
+                    cd sentiment-ai && pytest tests/test_api.py \
                         --junit-xml=junit-integration.xml \
                         -v
                 '''
             }
             post {
                 always {
-                    junit 'junit-integration.xml'
+                    junit 'sentiment-ai/junit-integration.xml'
                 }
             }
         }
@@ -70,11 +70,11 @@ pipeline {
         // STAGE 6 : Audit sécurité Bandit
         stage('Security Scan') {
             steps {
-                sh 'bandit -r src/ -f json -o bandit-report.json || true'
+                sh 'cd sentiment-ai && bandit -r src/ -f json -o bandit-report.json || true'
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'bandit-report.json',
+                    archiveArtifacts artifacts: 'sentiment-ai/bandit-report.json',
                                      allowEmptyArchive: true
                 }
             }
